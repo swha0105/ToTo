@@ -1,0 +1,4 @@
+Name,Year,Date,Opposite,Score,Batorder,Position,Atbats,Run,Hit,Double,Triple,HR,TotalHit,RBI,SB,SBFail,BB,HBP,IntentionalBB,SO,DoublePlay,SacriHit,SacriFly,AVG,SLG,OPS,Pitches,RE24,WPA,Started,OBP,avLI
+지성준,2020,06-11,한화,W 5:0,6,C,1,0,0,0,0,0,0,1,0,0,2,0,0,1,0,0,0,0.000,0.000,0.667,16,1.59,0.070,1,0.667,0.94
+지성준,2020,06-12,@LG,L 2:3,6,C,4,0,1,0,0,0,1,1,0,0,0,0,0,2,0,0,0,0.200,0.200,0.629,17,-0.07,0.012,1,,
+지성준,2020,06-13,@LG,W 7:6,6,C,3,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0.250,0.250,0.705,14,0.70,0.077,1,0.455,1.50

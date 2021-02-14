@@ -1,0 +1,4 @@
+Name,Year,Date,Opposite,Score,Run,Earnedrun,Plateappear,Atbats,Hit,Double,Triple,HR,BB,Intentional_BB,HBP,SO,Pitches,AVG,OBP,OPS,ERA,RE24,WPA,Decision,Interval,Started,WHIP,Innings
+송창현,2019,06-20,롯데,W 10:7,0,0,5,4,1,0,0,0,1,0,0,2,28,0.250,0.400,0.650,0.00,0.56,0.015,,7+일,0,2.00,1.0
+송창현,2019,08-18,@키움,W 5:4,3,3,23,21,6,0,0,1,2,0,0,2,76,0.280,0.348,0.776,4.50,-0.23,-0.005,,7+일,1,1.67,5.0
+송창현,2019,08-27,키움,L 0:15,6,6,29,28,8,1,0,3,1,0,0,1,113,0.283,0.310,0.953,6.39,-2.50,-0.272,L,7+일,1,1.50,6.2

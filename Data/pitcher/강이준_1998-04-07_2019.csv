@@ -1,0 +1,4 @@
+Name,Year,Date,Opposite,Score,Run,Earnedrun,Plateappear,Atbats,Hit,Double,Triple,HR,BB,Intentional_BB,HBP,SO,Pitches,AVG,OBP,OPS,ERA,RE24,WPA,Decision,Interval,Started,WHIP,Innings
+강이준,2019,05-07,@두산,L 3:4,2,2,16,13,3,0,0,0,2,1,1,1,59,0.231,0.375,0.606,5.40,-0.43,-0.061,,7+일,1,1.50,3.1
+강이준,2019,05-18,@한화,L 2:5,4,4,23,19,5,2,0,0,3,0,1,1,81,0.250,0.391,0.760,7.04,-1.52,-0.232,L,7+일,1,1.70,4.1
+강이준,2019,09-08,키움,L 3:13,5,5,14,10,6,2,0,1,4,0,0,1,61,0.333,0.714,1.814,11.00,-4.86,-0.369,L,7+일,1,2.56,1.1
