@@ -3,7 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import os
+import sys
 
+#%%
 
 def find_order_data(soup):
     a = soup.find('div', {'class':'wrapper'})
@@ -29,6 +31,40 @@ def find_order_data(soup):
     scores = j1.find('span').get_text()
 
     return l_oddrow, l_evenrow, scores.split(":")[0],scores.split(":")[1]
+
+# def write_order_table(l_oddrow, l_evenrow,away_score,home_score, date, stadium,path):
+def write_order_table(l_oddrow, l_evenrow,away_score,home_score):
+    names = [ ]
+    births = []
+    length = len(l_oddrow)
+    for i in range(length):
+        tmp_info = l_oddrow[i].find('a')
+        names.append(tmp_info.get_text())       
+        birth_index = str(tmp_info).index('birth')
+        births.append(str(tmp_info)[birth_index+6:birth_index+16])
+
+        tmp_info = l_evenrow[i].find('a')
+        names.append(tmp_info.get_text())       
+        birth_index = str(tmp_info).index('birth')
+        births.append(str(tmp_info)[birth_index+6:birth_index+16])
+
+        # order_tuple = list(map(tuple,zip(names,births)))
+        # order_tuple.append([away_score,home_score])
+        # order_data = pd.DataFrame(order_tuple)
+        
+        cols_index = ['away_name', 'away_birth','home_name', 'home_birth']
+        
+    frame_data =  [ names[:length],births[:length],names[length:],births[length:] ]
+    # frame_data.append([away_score,away_score,home_score,home_score])
+    
+    order_frame = pd.DataFrame(zip(*frame_data),columns=cols_index)
+    # order_frame.append([away_score,away_score,home_score,home_score])
+        # order_data.columns = cols_index
+   
+        # order_data.to_csv(path+date+'_'+stadium+'.csv', encoding='cp949', index=False)
+    # order_frame = pd.DataFrame(list(map(list,zip(*[order_data[0],order_data[1]]))),columns=cols_index)
+    return order_frame,away_score,home_score
+
 
 
 #%%
@@ -71,8 +107,9 @@ def GetVersusData(soup):
 
     index = ['시즌','홈원정결과','득점','실점']
     versus_data = pd.DataFrame(list(map(list,zip(*[away,home]))),columns=[away_team,home_team],index=index)
-return versus_data
-# %%
+
+    return versus_data
+#%%
 
 def GetPitcher(soup):
 
@@ -159,39 +196,14 @@ def GetPitcher(soup):
 
 
 
-#%%
 
-def write_order_table(l_oddrow, l_evenrow,away_score,home_score, date, stadium,path):
-
-    names = [ ]
-    births = []
-
-    for i in range(len(l_oddrow)):
-        tmp_info = l_oddrow[i].find('a')
-        names.append(tmp_info.get_text())       
-        birth_index = str(tmp_info).index('birth')
-        births.append(str(tmp_info)[birth_index+6:birth_index+16])
-
-        tmp_info = l_evenrow[i].find('a')
-        names.append(tmp_info.get_text())       
-        birth_index = str(tmp_info).index('birth')
-        births.append(str(tmp_info)[birth_index+6:birth_index+16])
-
-        order_tuple = list(map(tuple,zip(names,births)))
-        order_tuple.append([away_score,home_score])
-        order_data = pd.DataFrame(order_tuple)
-        
-        cols_index = ['name', 'birth']
-        order_data.columns = cols_index
-   
-        order_data.to_csv(path+date+'_'+stadium+'.csv', encoding='cp949', index=False)
 
 #%%
 
 yrs_list = ['2017', '2018', '2019','2020']
 date_list = []
 
-import sys
+path = '/home/swha/ToTo/ToTo/Data/team_info/'
 
 for year in yrs_list:
     year_2017 = pd.date_range(year + '-04-01', periods = 180, freq = '1d')
@@ -208,16 +220,45 @@ for date in date_list:
         response = requests.get(url)
         html = response.text
         soup = BeautifulSoup(html, 'html.parser')
-        sys.exit()
 
         l_oddrow, l_evenrow, away_score , home_score = find_order_data(soup)
+        # write_order_table(l_oddrow,l_evenrow,away_score,home_score,date,stadium,save_path)
+        BatterOrder,AwayGet,HomeGet = write_order_table(l_oddrow,l_evenrow,away_score,home_score)
 
-        if len(l_oddrow) == 0:
-            continue 
-        write_order_table(l_oddrow,l_evenrow,away_score,home_score,date,stadium,save_path)
+        url = 'http://www.statiz.co.kr/boxscore.php?opt=2&date=' + date + '&stadium=' + stadium 
+        response = requests.get(url)
+        html = response.text
+        soup = BeautifulSoup(html, 'html.parser')
+
+        versus_data = GetVersusData(soup)
+        pitcher_data = GetPitcher(soup)
+
+        # test1_df.to_excel('파일명.xlsx', sheet_name = 'test1')
+        
+        with pd.ExcelWriter(path+date+'_'+stadium + AwayGet.strip().zfill(2) +'-' + HomeGet.strip().zfill(2) + '.xlsx') as writer:
+            BatterOrder.to_excel(writer, sheet_name='order')
+            versus_data.to_excel(writer, sheet_name='versus')
+            pitcher_data.to_excel(writer, sheet_name='pitcher')
+
+        # BatterOrder.to_excel(path+date+'_'+stadium + AwayGet.strip().zfill(2) +'-' + HomeGet.strip().zfill(2) + '.xlsx', sheet_name ='order')
+        # pitcher_data.to_excel(path+date+'_'+stadium + AwayGet.strip().zfill(2) +'-' + HomeGet.strip().zfill(2) + '.xlsx',sheet_name ='pitcher')
+        # versus_data.to_excel(path+date+'_'+stadium + AwayGet.strip().zfill(2) +'-' + HomeGet.strip().zfill(2) + '.xlsx', sheet_name ='versus')
+
+        # BatterOrder.to_excel(path+date+'_'+stadium + AwayGet +'-' + HomeGet + '.csv', encoding='cp949', index=False,sheet_name ='order')
+        # pitcher_data.to_excel(path+date+'_'+stadium + AwayGet +'-' + HomeGet + '.csv', encoding='cp949', index=False,sheet_name ='pitcher')
+        # versus_data.to_excel(path+date+'_'+stadium + AwayGet +'-' + HomeGet + '.csv', encoding='cp949', index=False,sheet_name ='versus')
+        # order_data.to_csv(path+date+'_'+stadium + AwayGet +'-' + HomeGet + '.csv', encoding='cp949', index=False)
+
+
+        
 
 # away 팀 먼저.
 # home 팀 먼저
+
+#%%
+
+
+#%%
 #%%
 url = 'http://www.statiz.co.kr/boxscore.php?opt=2&date=' + date + '&stadium=' + stadium 
 response = requests.get(url)
@@ -246,80 +287,5 @@ f = e.find_all('div', {'class':'col-md-12 col-xs-12 col-sm-12 col-lg-12'})[0]
 #%%
 
 
-
-def getRecentdata(soup):
-    a = soup.find('div', {'class':'wrapper'})
-    b = a.find('div', {'class':'content-wrapper'})
-    c = b.find('div', {'class':'container'})
-    d = c.find('section', {'class':'content'})
-    e = d.find('div', {'class':'row'})
-
-    f = e.find_all('div', {'class':'col-md-12 col-xs-12 col-sm-12 col-lg-12'})[-1]
-    g = f.find_all('div', {'class':'row'})[1]
-
-    h = g.find_all('div',{'class': 'col-xs-12 col-sm-6'})[0]
-    i = h.find('div',{'class': 'box'})
-    j = i.find('div',{'class': 'box-body no-padding'})
-    k = j.find('table',{'class': 'table table-striped'})
-
-)
-    away_play_result = []
-    away_GetScore = []
-    away_GiveScore = []
-    for recent_data in k.find_all('tr')[1:]:
-        away_play_result.append(recent_data.get_text().split(' ')[0][-1])
-
-        tmp = recent_data.get_text().split(' ')[1]
-
-        away_GetScore.append(tmp.split(":")[0])
-        away_GiveScore.append(tmp.split(":")[1][0])
-
-
-    h = g.find_all('div',{'class': 'col-xs-12 col-sm-6'})[1]
-    i = h.find('div',{'class': 'box'})
-    j = i.find('div',{'class': 'box-body no-padding'})
-    k = j.find('table',{'class': 'table table-striped'})
-    
-    home_play_result = []
-    home_GetScore = []
-    home_GiveScore = []
-    for recent_data in k.find_all('tr')[1:]:
-
-        home_play_result.append(recent_data.get_text().split(' ')[0][-1])
-
-        tmp = recent_data.get_text().split(' ')[1]
-
-        home_GetScore.append(tmp.split(":")[0])
-        home_GiveScore.append(tmp.split(":")[1][0])
-
-    print(away_GetScore,away_GiveScore,home_GetScore,home_GiveScore)
-
-#%%
-    h = g.find_all('div',{'class': 'col-xs-12 col-sm-6'})[0]
-    i = h.find('div',{'class': 'box'})
-    j = i.find('div',{'class': 'box-body no-padding'})
-    k = j.find('table',{'class': 'table table-striped'})
-
-    away_team = k.find_all('th')[1].text
-    home_team = k.find_all('th')[2].text
-
-    season_away = k.find_all('tr')[2].text.split('\n')[1]
-    season_home = k.find_all('tr')[2].text.split('\n')[2]
-
-    AwayTeam_AwaySeasonResult = k.find_all('tr')[4].text.split('\n')[1]
-    HwayTeam_HomeSeasonResult = k.find_all('tr')[3].text.split('\n')[2]
-
-    GetScore = k.find_all('tr')[5].text.split('\n')
-    Away_GetScore = GetScore[1]
-    Home_GetScore = GetScore[2]
-
-    GiveScore = k.find_all('tr')[6].text.split('\n')
-    Away_GiveScore = GiveScore[1]
-    Home_GiveScore = GiveScore[2]
-
-    VersusResult = k.find_all('tr')[7].text.split('\n')[1]
-
-    away = [season_away,AwayTeam_AwaySeasonResult,Away_GetScore,Away_GiveScore]
-    home = [season_home,HwayTeam_HomeSeasonResult,Home_GetScore,Home_GiveScore]
 
 # %%
