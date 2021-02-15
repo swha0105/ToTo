@@ -66,7 +66,7 @@ def write_order_table(l_oddrow, l_evenrow,away_score,home_score):
 
 
 
-#%%
+
 def GetVersusData(soup):
 
     a = soup.find('div', {'class':'wrapper'})
@@ -108,7 +108,7 @@ def GetVersusData(soup):
     versus_data = pd.DataFrame(list(map(list,zip(*[away,home]))),columns=[away_team,home_team],index=index)
 
     return versus_data
-#%%
+
 
 def GetPitcher(soup):
 
@@ -134,7 +134,10 @@ def GetPitcher(soup):
     AwayPitcher_Season_game = AwayPitcher_Season.split(" ")[0]
     HomePitcher_Season_game = HomePitcher_Season.split(" ")[0]
     
-    AwayPitcher_Season_win = AwayPitcher_Season.split(" ")[1]
+    try:
+        AwayPitcher_Season_win = AwayPitcher_Season.split(" ")[1]
+    except IndexError:  # 선발투수 정보 누락
+        return False 
     HomePitcher_Season_win = HomePitcher_Season.split(" ")[1]
     
     AwayPitcher_Season_lose = AwayPitcher_Season.split(" ")[2]
@@ -143,7 +146,7 @@ def GetPitcher(soup):
     AwayPitcher_Season_defense = AwayPitcher_Season.split(" ")[3]
     HomePitcher_Season_defense = HomePitcher_Season.split(" ")[3]
 
-#--
+
     AwayPitcher_Versus = k.find_all('tr')[5].text.split('\n')[1]
     HomePitcher_Versus = k.find_all('tr')[5].text.split('\n')[2]
 
@@ -159,7 +162,6 @@ def GetPitcher(soup):
     AwayPitcher_Versus_defense = AwayPitcher_Versus.split(" ")[3]
     HomePitcher_Versus_defense = HomePitcher_Versus.split(" ")[3]
 
-#-- 
 
     AwayPitcher_Recent = k.find_all('tr')[6].text.split('\n')[1]
     HomePitcher_Recent = k.find_all('tr')[6].text.split('\n')[2]
@@ -211,6 +213,7 @@ for year in yrs_list:
 date_list = sum(date_list,[])
 stadiums = ['라이온즈파크','고척돔','잠실','마산','인천문학','대전한밭','챔피언스필드','케이티위즈파크','부산사직']
 
+#%%
 save_path = '/home/ha/projects/Toto/Data/order/'
 
 for date in date_list:
@@ -236,14 +239,16 @@ for date in date_list:
         versus_data = GetVersusData(soup)
         pitcher_data = GetPitcher(soup)
 
-        
+        if type(pitcher_data) == bool:
+            continue
+
         with pd.ExcelWriter(path+date+'_'+stadium + AwayGet.strip().zfill(2) +'-' + HomeGet.strip().zfill(2) + '.xlsx') as writer:
             BatterOrder.to_excel(writer, sheet_name='order')
             versus_data.to_excel(writer, sheet_name='versus')
             pitcher_data.to_excel(writer, sheet_name='pitcher')
 
 
-        print(path+date+'_'+stadium + AwayGet.strip().zfill(2) +'-' + HomeGet.strip().zfill(2) + '.xlsx')
+        print(date + stadium + AwayGet.strip().zfill(2) +'-' + HomeGet.strip().zfill(2) + '.xlsx')
 
  
 
