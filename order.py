@@ -2,7 +2,6 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-import os
 import sys
 
 #%%
@@ -222,7 +221,11 @@ for date in date_list:
         soup = BeautifulSoup(html, 'html.parser')
 
         l_oddrow, l_evenrow, away_score , home_score = find_order_data(soup)
-        # write_order_table(l_oddrow,l_evenrow,away_score,home_score,date,stadium,save_path)
+        
+
+        if len(l_oddrow) == 0:
+            continue
+
         BatterOrder,AwayGet,HomeGet = write_order_table(l_oddrow,l_evenrow,away_score,home_score)
 
         url = 'http://www.statiz.co.kr/boxscore.php?opt=2&date=' + date + '&stadium=' + stadium 
@@ -233,59 +236,14 @@ for date in date_list:
         versus_data = GetVersusData(soup)
         pitcher_data = GetPitcher(soup)
 
-        # test1_df.to_excel('파일명.xlsx', sheet_name = 'test1')
         
         with pd.ExcelWriter(path+date+'_'+stadium + AwayGet.strip().zfill(2) +'-' + HomeGet.strip().zfill(2) + '.xlsx') as writer:
             BatterOrder.to_excel(writer, sheet_name='order')
             versus_data.to_excel(writer, sheet_name='versus')
             pitcher_data.to_excel(writer, sheet_name='pitcher')
 
-        # BatterOrder.to_excel(path+date+'_'+stadium + AwayGet.strip().zfill(2) +'-' + HomeGet.strip().zfill(2) + '.xlsx', sheet_name ='order')
-        # pitcher_data.to_excel(path+date+'_'+stadium + AwayGet.strip().zfill(2) +'-' + HomeGet.strip().zfill(2) + '.xlsx',sheet_name ='pitcher')
-        # versus_data.to_excel(path+date+'_'+stadium + AwayGet.strip().zfill(2) +'-' + HomeGet.strip().zfill(2) + '.xlsx', sheet_name ='versus')
 
-        # BatterOrder.to_excel(path+date+'_'+stadium + AwayGet +'-' + HomeGet + '.csv', encoding='cp949', index=False,sheet_name ='order')
-        # pitcher_data.to_excel(path+date+'_'+stadium + AwayGet +'-' + HomeGet + '.csv', encoding='cp949', index=False,sheet_name ='pitcher')
-        # versus_data.to_excel(path+date+'_'+stadium + AwayGet +'-' + HomeGet + '.csv', encoding='cp949', index=False,sheet_name ='versus')
-        # order_data.to_csv(path+date+'_'+stadium + AwayGet +'-' + HomeGet + '.csv', encoding='cp949', index=False)
+        print(path+date+'_'+stadium + AwayGet.strip().zfill(2) +'-' + HomeGet.strip().zfill(2) + '.xlsx')
 
+ 
 
-        
-
-# away 팀 먼저.
-# home 팀 먼저
-
-#%%
-
-
-#%%
-#%%
-url = 'http://www.statiz.co.kr/boxscore.php?opt=2&date=' + date + '&stadium=' + stadium 
-response = requests.get(url)
-html = response.text
-soup = BeautifulSoup(html, 'html.parser')
-
-sys.exit()
-a = soup.find('div', {'class':'wrapper'})
-b = a.find('div', {'class':'content-wrapper'})
-c = b.find('div', {'class':'container'})
-d = c.find('section', {'class':'content'})
-e = d.find('div', {'class':'row'})
-f = e.find_all('div', {'class':'col-md-12 col-xs-12 col-sm-12 col-lg-12'})[0]
-# g = f.find('div', {'class':'row'})
-# h = g.find('div', {'class':'col-xs-12 col-sm-12 col-md-12 col-lg-4'})
-# # try:
-# i = h.find('div',{'class':'callout'})
-# # except AttributeError:
-# #     return [],[]
-
-# j = i.find('div',{"style":"float:left;width:50%;text-align:center;"})
-# scores = j.find('span').get_text()
-
-#%%
-
-#%%
-
-
-
-# %%
