@@ -223,7 +223,10 @@ def GetPlayerBirth(soup):
     i = h.find('div', {'class':'callout'})
     j = i.find('div', {'class':'btn-group'})
     k = j.find('ul', {'class':'dropdown-menu dropdown-menu-left'})
-    l = k.find_all('li')[0]
+    try:
+        l = k.find_all('li')[0]
+    except AttributeError:
+        return False
     n = re.compile('[0-9]').findall(l.getText())
 
     return ''.join(n[0:4]) + '-' + ''.join(n[4:6]) + '-' + ''.join(n[6:8])

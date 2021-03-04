@@ -70,7 +70,7 @@ for team in team_names:
 
 for player in player_list:
     for year in yrs_list:
-
+        
         url = 'http://www.statiz.co.kr/player.php?name=' + player
         response = requests.get(url)
         html = response.text
@@ -80,22 +80,27 @@ for player in player_list:
         if birth == False:
             continue
         else:
-            url = 'http://www.statiz.co.kr/player.php?opt=1&name=' + player + '&birth=' + birth
-            response = requests.get(url)
-            html = response.text
-            year_soup = BeautifulSoup(html, 'html.parser')
 
-            with open(os.getcwd() + '/player_soup_data/' + f'{player}_{birth}_{year}_year', "w", encoding='utf-8') as file:
-                file.write(str(year_soup))
+            # url = 'http://www.statiz.co.kr/player.php?opt=1&name=' + player + '&birth=' + birth
+            # response = requests.get(url)
+            # html = response.text
+            # year_soup = BeautifulSoup(html, 'html.parser')
 
-            url = 'http://www.statiz.co.kr/player.php?opt=3&name=' + player + '&birth=' + birth
+            # with open(os.getcwd() + '/player_soup_data/' + f'{player}_{birth}_{year}_year', "w", encoding='utf-8') as file:
+            #     file.write(str(year_soup))
+
+            url = 'http://www.statiz.co.kr/player.php?opt=3&sopt=0&name=' + player + '&birth=' + birth +'&re=0&se=&da=&year=' + year + '&cv='
+            
             response = requests.get(url)
             html = response.text
             day_soup = BeautifulSoup(html, 'html.parser')
+            
+            if (day_soup.find_all('tr')[-1].getText()).startswith('데이터'):
+                continue
+            else:
+                with open(os.getcwd() + '/player_soup_data/' + f'{player}_{birth}_{year}', "w", encoding='utf-8') as file:
+                    file.write(str(day_soup))
 
-            with open(os.getcwd() + '/player_soup_data/' + f'{player}_{birth}_{year}_day', "w", encoding='utf-8') as file:
-                file.write(str(day_soup))
-
-
+        print(year,player)
     
 
