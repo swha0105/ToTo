@@ -4,6 +4,7 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import os 
+import get_data_from_html
 
 yrs_list = ['2016','2017', '2018', '2019','2020']
 date_list = []
@@ -45,12 +46,12 @@ for date in date_list:
         print(date, stadium)
 
 #%%     
+# players soup data
 
-# players 이름 정보
-
+# all players name include same name
 team_names = ['두산','한화','키움','KIA','삼성','롯데','LG','KT','NC']
 yrs_list = ['2016','2017', '2018', '2019','2020']
-
+player_list = []
 for team in team_names:
     for year in yrs_list:
         print(team,year)
@@ -60,30 +61,41 @@ for team in team_names:
         html = response.text
         soup = BeautifulSoup(html, 'html.parser')
 
-        with open(os.getcwd() + '/soup_data/' + f'{team}_{year}_players', "w", encoding='utf-8') as file:
-            file.write(str(soup))
+        player_list.extend(get_data_from_html.GetPlayerList_wo_birth(soup))
+
+
 #%%
+# player soup 
 
-# 테스트. 
-
-a = soup.find('div', {'class':'wrapper'})
-b = a.find('div', {'class':'content-wrapper'})
-c = b.find('div', {'class':'container'})
-d = c.find('section', {'class':'content'})
-e = d.find('div', {'class':'row'})
-f = e.find_all('div', {'class':'col-md-12 col-xs-12 col-sm-12 col-lg-12'})[-1]
-g = f.find('div', {'class':'row'})
-h = g.find('div', {'class':'col-xs-12 col-sm-6'})
-i = h.find('div', {'class':'box'})    
-j = i.find('div', {'class':'box-body no-padding'})
-# k = j.find('div', {'class':'table table-striped'})
-
-player_list = re.compile('[가-힣]+').findall(j.getText())[2:]
 
 for player in player_list:
-    player_url = 'http://www.statiz.co.kr/player.php?name=' + player 
+    for year in yrs_list:
 
-#%%
+        url = 'http://www.statiz.co.kr/player.php?name=' + player
+        response = requests.get(url)
+        html = response.text
+        soup = BeautifulSoup(html, 'html.parser')
+        birth = get_data_from_html.GetPlayerBirth(soup)
 
-print()
-# %%
+        if birth == False:
+            continue
+        else:
+            url = 'http://www.statiz.co.kr/player.php?opt=1&name=' + player + '&birth=' + birth
+            response = requests.get(url)
+            html = response.text
+            year_soup = BeautifulSoup(html, 'html.parser')
+
+            with open(os.getcwd() + '/player_soup_data/' + f'{player}_{birth}_{year}_year', "w", encoding='utf-8') as file:
+                file.write(str(year_soup))
+
+            url = 'http://www.statiz.co.kr/player.php?opt=3&name=' + player + '&birth=' + birth
+            response = requests.get(url)
+            html = response.text
+            day_soup = BeautifulSoup(html, 'html.parser')
+
+            with open(os.getcwd() + '/player_soup_data/' + f'{player}_{birth}_{year}_day', "w", encoding='utf-8') as file:
+                file.write(str(day_soup))
+
+
+    
+

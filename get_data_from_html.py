@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-
+import re
 
 def find_order_data(soup):
     a = soup.find('div', {'class':'wrapper'})
@@ -192,7 +192,7 @@ def GetPitcher(soup):
 
 
 
-def GetPlayerList(soup):
+def GetPlayerList_wo_birth(soup):
 
     a = soup.find('div', {'class':'wrapper'})
     b = a.find('div', {'class':'content-wrapper'})
@@ -207,4 +207,23 @@ def GetPlayerList(soup):
     # k = j.find('div', {'class':'table table-striped'})
 
     player_list = re.compile('[가-힣]+').findall(j.getText())[2:]
+
     return player_list
+
+def GetPlayerBirth(soup):
+
+    a = soup.find('div', {'class':'wrapper'})
+    b = a.find('div', {'class':'content-wrapper'})
+    c = b.find('div', {'class':'container'})
+    d = c.find('section', {'class':'content'})
+    e = d.find('div', {'class':'row'})
+    f = e.find_all('div', {'class':'col-md-12 col-xs-12 col-sm-12 col-lg-12'})[0]
+    g = f.find('div', {'class':'row'})
+    h = g.find('div', {'class':'col-xs-12 col-sm-4 col-md-4 col-lg-4'})
+    i = h.find('div', {'class':'callout'})
+    j = i.find('div', {'class':'btn-group'})
+    k = j.find('ul', {'class':'dropdown-menu dropdown-menu-left'})
+    l = k.find_all('li')[0]
+    n = re.compile('[0-9]').findall(l.getText())
+
+    return ''.join(n[0:4]) + '-' + ''.join(n[4:6]) + '-' + ''.join(n[6:8])
