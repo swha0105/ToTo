@@ -4,7 +4,9 @@ import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 import os 
+import re
 import get_data_from_html
+
 
 yrs_list = ['2016','2017', '2018', '2019','2020']
 date_list = []
@@ -45,6 +47,14 @@ for date in date_list:
 
         print(date, stadium)
 
+
+
+
+
+#------
+
+
+
 #%%     
 # players soup data
 
@@ -64,30 +74,31 @@ for team in team_names:
         player_list.extend(get_data_from_html.GetPlayerList_wo_birth(soup))
 
 
-#%%
-# player soup 
 
+# player soup 
+#%%
+
+existPlayerList = os.listdir(os.getcwd()+'/player_soup_data/')
+existPlayerList = list(map(lambda x:re.compile('[가-힣]+').findall(x)[0],existPlayerList))
+
+#%%
 
 for player in player_list:
-    for year in yrs_list:
-        
+    if player in existPlayerList:
+        continue
+    else:
         url = 'http://www.statiz.co.kr/player.php?name=' + player
         response = requests.get(url)
         html = response.text
         soup = BeautifulSoup(html, 'html.parser')
         birth = get_data_from_html.GetPlayerBirth(soup)
 
+        print(player,birth)
+
         if birth == False:
             continue
-        else:
 
-            # url = 'http://www.statiz.co.kr/player.php?opt=1&name=' + player + '&birth=' + birth
-            # response = requests.get(url)
-            # html = response.text
-            # year_soup = BeautifulSoup(html, 'html.parser')
-
-            # with open(os.getcwd() + '/player_soup_data/' + f'{player}_{birth}_{year}_year', "w", encoding='utf-8') as file:
-            #     file.write(str(year_soup))
+        for year in yrs_list:
 
             url = 'http://www.statiz.co.kr/player.php?opt=3&sopt=0&name=' + player + '&birth=' + birth +'&re=0&se=&da=&year=' + year + '&cv='
             
@@ -95,12 +106,13 @@ for player in player_list:
             html = response.text
             day_soup = BeautifulSoup(html, 'html.parser')
             
-            if (day_soup.find_all('tr')[-1].getText()).startswith('데이터'):
-                continue
-            else:
-                with open(os.getcwd() + '/player_soup_data/' + f'{player}_{birth}_{year}', "w", encoding='utf-8') as file:
-                    file.write(str(day_soup))
+            # if (day_soup.find_all('tr')[-1].getText()).startswith('데이터'):
+            #     continue
+            # else:
+            with open(os.getcwd() + '/player_soup_data/' + f'{player}_{birth}_{year}', "w", encoding='utf-8') as file:
+                file.write(str(day_soup))
+                print(player,year)
 
-        print(year,player)
+        
     
 

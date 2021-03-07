@@ -2,6 +2,8 @@
 import os
 import pandas as pd
 import get_data_from_html
+from bs4 import BeautifulSoup
+import re 
 
 soup_data = os.listdir('./soup_data')
 # %%
@@ -13,9 +15,14 @@ yrs_list = ['2016','2017', '2018', '2019','2020']
 for team_name in team_names:
     for yrs in yrs_list:
 
-        team_soup = open(os.getcwd() + '/soup_data/' + f'{team_name}_{yrs}')
-        tmp = get_data_from_html.GetPlayerList(team_soup)
+        team_soup = open(os.getcwd() + '/soup_data/' + f'{team_name}_{yrs}_players')
+        player_list = set(get_data_from_html.GetPlayerList(BeautifulSoup(team_soup)))
 
-        print(tmp)
-        break
+        
+        
+    break
+#%%
+
+for player in player_list:
+    player_url = 'http://www.statiz.co.kr/player.php?name=' + player 
     break
