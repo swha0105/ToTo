@@ -16,14 +16,15 @@ def game_score(soup):
 
     away_get,home_get = soup.select_one('body > div > div.content-wrapper > div > section.content > div > div:nth-child(1) > div > div.col-xs-12.col-sm-12.col-md-12.col-lg-4 > div > div:nth-child(2) > span').get_text().split(':')
 
-    return (away_get,home_get)
+    return (away_get.strip().zfill(2),home_get.strip().zfill(2))
 
 def home_batting_order(soup):
     ''' 경기 log 데이터를 받아 홈 배팅오더 데이터 생성.
     return: 선수이름, 생년월일
 
     '''
-    HomeBattingOrder = []
+    Names = []
+    Births = []
 
     raw_table = soup.select_one('body > div > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div > div.box-body.no-padding.table-responsive > table')
 
@@ -32,7 +33,10 @@ def home_batting_order(soup):
         birth = str(raw_data)[birth_index+6:birth_index+16]
         name = raw_data.get_text()
 
-        HomeBattingOrder.append((name,birth))
+        Names.append(name)
+        Births.append(birth)
+
+    HomeBattingOrder = pd.DataFrame({'선수 이름': Names, '생년월일': Births})
 
     return HomeBattingOrder
 
@@ -41,7 +45,8 @@ def away_batting_order(soup):
     return: 선수이름, 생년월일
 
     '''
-    AwayBattingOrder = []
+    Names = []
+    Births = []
 
     raw_table = soup.select_one('body > div > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div > div.box-body.no-padding.table-responsive > table')
 
@@ -50,7 +55,11 @@ def away_batting_order(soup):
         birth = str(raw_data)[birth_index+6:birth_index+16]
         name = raw_data.get_text()
 
-        AwayBattingOrder.append((name,birth))
+        Names.append(name)
+        Births.append(birth)
+
+    
+    AwayBattingOrder = pd.DataFrame({'선수 이름': Names, '생년월일': Births})
 
     return AwayBattingOrder
 
@@ -104,6 +113,7 @@ def get_versus_data(soup):
             HomeGetScore,HomeLoseScore,VersusDataOnlyHomeWin],Feature)
 
     return AwayInfo, HomeInfo
+
 
 def start_pitcher(soup):
     '''
@@ -216,3 +226,34 @@ def team_recent_result(soup):
     return AwayRecentData,HomeRecentData
 
 # %%
+# game_score
+# away_batting_order
+# home_batting_order
+
+# start_pitcher
+# team_recent_result
+#%%
+# def GetAllGameData(preview_soup,log_soup):
+
+AwayVersus,HomeVersus = get_versus_data(preview_soup)
+AwayRecent,HomeRecent = team_recent_result(preview_soup)
+Awaypitcher,Homepitcher = start_pitcher(preview_soup)
+AwayBattingOrder = away_batting_order(log_soup)
+HomeBattingOrder = home_batting_order(log_soup)
+AwayScore, HomeScore = game_score(log_soup)
+# with pd.ExcelWirter('')
+with pd.ExcelWriter(f'2017-05-14_잠실_{AwayScore}_{HomeScore}.xlsx') as tmp:
+ 
+    AwayVersus.to_excel(tmp,sheet_name='AwayVersus')
+    AwayRecent.to_excel(tmp,sheet_name='AwayRecent')
+    Awaypitcher.to_excel(tmp,sheet_name='Awaypitcher')
+    AwayBattingOrder.to_excel(tmp,sheet_name='AwayBattingOrder')
+
+    HomeVersus.to_excel(tmp,sheet_name='HomeVersus')
+    HomeRecent.to_excel(tmp,sheet_name='HomeRecent')
+    Homepitcher.to_excel(tmp,sheet_name='Homepitcher')
+    HomeBattingOrder.to_excel(tmp,sheet_name='HomeBattingOrder')
+
+# %%
+
+
