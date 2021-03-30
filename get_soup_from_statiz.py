@@ -7,6 +7,7 @@ import os
 import re
 import get_data_from_html
 
+# 2016 ~ 2020년까지 4월 1일부터 180일 동안 날짜 데이터 생성
 
 yrs_list = ['2016','2017', '2018', '2019','2020']
 date_list = []
@@ -23,17 +24,20 @@ stadiums = ['라이온즈파크','고척돔','잠실','마산','인천문학','�
 
 #%%
 
-# 경기 정보, 최근 팀정보, 선발수투 정보.
+# 경기 정보, 최근 팀정보, 선발투수 정보를 크롤링으로 긁어와 html 원본 저장
+
+# log: 각 팀의 배팅오더
+# preview: 각 팀의 선발투수 정보, 최근 10경기, 상대전적
 
 for date in date_list:
     for stadium in stadiums:
-        url = 'http://www.statiz.co.kr/boxscore.php?opt=5&date=' + date + '&stadium=' + stadium 
-        response = requests.get(url)
+        log_url = 'http://www.statiz.co.kr/boxscore.php?opt=5&date=' + date + '&stadium=' + stadium 
+        response = requests.get(log_url)
         html = response.text
         log_soup = BeautifulSoup(html, 'html.parser')
         
-        url = 'http://www.statiz.co.kr/boxscore.php?opt=2&date=' + date + '&stadium=' + stadium 
-        response = requests.get(url)
+        preview_url = 'http://www.statiz.co.kr/boxscore.php?opt=2&date=' + date + '&stadium=' + stadium 
+        response = requests.get(preview_url)
         html = response.text
         preview_soup = BeautifulSoup(html, 'html.parser')
 
@@ -49,14 +53,12 @@ for date in date_list:
 
 
 
-
-
 #------
 
-
-
 #%%     
-# players soup data
+# 각 팀의 선수들의 이름을 긁어옴
+# 팀 정보 -> 연봉정보에 모든 선수이름이 적혀있음
+# 특정연도는 누락된 선수이름이 있어 5년간 선수 이름 데이터를 모아 합침.
 
 # all players name include same name
 team_names = ['두산','한화','키움','KIA','삼성','롯데','LG','KT','NC']
@@ -75,13 +77,15 @@ for team in team_names:
 
 
 
-# player soup 
 #%%
+# 긁어온 html 데이터에서 이름만 추출
 
 existPlayerList = os.listdir(os.getcwd()+'/player_soup_data/')
 existPlayerList = list(map(lambda x:re.compile('[가-힣]+').findall(x)[0],existPlayerList))
 
 #%%
+
+# 선수의 이름과 그에 해당되는 생년월일을 긁어와 최근 N경기 데이터가 담긴 html 크롤링. (투수, 타자 상관없음)
 
 for player in player_list:
     if player in existPlayerList:
