@@ -233,27 +233,37 @@ def team_recent_result(soup):
 # start_pitcher
 # team_recent_result
 #%%
-# def GetAllGameData(preview_soup,log_soup):
+def GetAllGameData(preview_soup,log_soup):
 
-AwayVersus,HomeVersus = get_versus_data(preview_soup)
-AwayRecent,HomeRecent = team_recent_result(preview_soup)
-Awaypitcher,Homepitcher = start_pitcher(preview_soup)
-AwayBattingOrder = away_batting_order(log_soup)
-HomeBattingOrder = home_batting_order(log_soup)
-AwayScore, HomeScore = game_score(log_soup)
-# with pd.ExcelWirter('')
-with pd.ExcelWriter(f'2017-05-14_잠실_{AwayScore}_{HomeScore}.xlsx') as tmp:
- 
-    AwayVersus.to_excel(tmp,sheet_name='AwayVersus')
-    AwayRecent.to_excel(tmp,sheet_name='AwayRecent')
-    Awaypitcher.to_excel(tmp,sheet_name='Awaypitcher')
-    AwayBattingOrder.to_excel(tmp,sheet_name='AwayBattingOrder')
+    AwayVersus,HomeVersus = get_versus_data(preview_soup)
+    AwayRecent,HomeRecent = team_recent_result(preview_soup)
+    Awaypitcher,Homepitcher = start_pitcher(preview_soup)
+    AwayBattingOrder = away_batting_order(log_soup)
+    HomeBattingOrder = home_batting_order(log_soup)
+    AwayScore, HomeScore = game_score(log_soup)
+    # with pd.ExcelWirter('')
 
-    HomeVersus.to_excel(tmp,sheet_name='HomeVersus')
-    HomeRecent.to_excel(tmp,sheet_name='HomeRecent')
-    Homepitcher.to_excel(tmp,sheet_name='Homepitcher')
-    HomeBattingOrder.to_excel(tmp,sheet_name='HomeBattingOrder')
+    with pd.ExcelWriter('/home/swha/ToTo/ToTo/Data/raw/game/' + f'{preview_soup[:10]}_{AwayScore}_{HomeScore}.xlsx') as tmp:
+    
+        AwayVersus.to_excel(tmp,sheet_name='AwayVersus')
+        AwayRecent.to_excel(tmp,sheet_name='AwayRecent')
+        Awaypitcher.to_excel(tmp,sheet_name='Awaypitcher')
+        AwayBattingOrder.to_excel(tmp,sheet_name='AwayBattingOrder')
+
+        HomeVersus.to_excel(tmp,sheet_name='HomeVersus')
+        HomeRecent.to_excel(tmp,sheet_name='HomeRecent')
+        Homepitcher.to_excel(tmp,sheet_name='Homepitcher')
+        HomeBattingOrder.to_excel(tmp,sheet_name='HomeBattingOrder')
 
 # %%
+import os 
+for soup_log in sorted(os.listdir('./Data/soup/soup_data/')):
+    if soup_log.endswith('log'):
+        soup_preview = soup_log[:-4] + '_preview'
+        GetAllGameData(soup_preview,soup_log)    
+    break
 
 
+
+
+# %%
