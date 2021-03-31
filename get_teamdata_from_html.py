@@ -2,11 +2,11 @@
 from bs4 import BeautifulSoup
 import pandas as pd
 
-log_html = '/home/swha/ToTo/ToTo/soup_data/2017-05-14_잠실_log'
-preview_html = '/home/swha/ToTo/ToTo/soup_data/2017-05-14_잠실_preview'
+# log_html = '/home/swha/ToTo/ToTo/soup_data/2017-05-14_잠실_log'
+# preview_html = '/home/swha/ToTo/ToTo/soup_data/2017-05-14_잠실_preview'
 
-log_soup = BeautifulSoup(open(log_html),"html.parser")
-preview_soup = BeautifulSoup(open(preview_html),"html.parser")
+# log_soup = BeautifulSoup(open(log_html),"html.parser")
+# preview_soup = BeautifulSoup(open(preview_html),"html.parser")
 
 def game_score(soup):
     '''
@@ -75,7 +75,9 @@ def get_versus_data(soup):
 
     AwayTeamName = raw_table.find_all('th',limit=3)[1].get_text()
     HomeTeamName = raw_table.find_all('th',limit=3)[2].get_text()
+    
 
+    #  raw_table_text[raw_table_text.index('시즌전적')+1]:
     AwaySeason = raw_table_text[raw_table_text.index('시즌전적')+1]
     AwaySeason_Win = AwaySeason.split(',')[0].split('-')[0]
     AwaySeason_Lose = AwaySeason.split(',')[0].split('-')[1]
@@ -120,12 +122,13 @@ def start_pitcher(soup):
     Input: preview log
     Output: (away, home) 선발투수, 시즌 승리, 시즌 패배, 시즌 자책점, 상대 승리, 상대 패배, 상대 자책점, 최근 30일 승리, 최근 30일 패배, 최근 30일 자책점
     '''
-    raw_table = preview_soup.select_one('body > div.wrapper > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div > div.box-body.no-padding')
+    raw_table = soup.select_one('body > div.wrapper > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div > div.box-body.no-padding')
     raw_table_text = [text for text in raw_table.get_text().split('\n') if text != '']
 
     AwayPicther = raw_table_text[raw_table_text.index('선발')+1]
     HomePicther = raw_table_text[raw_table_text.index('선발')+2]
-
+    
+    
     AwaySeason = raw_table_text[raw_table_text.index('시즌 성적')+1]
     AwaySeason_Game = AwaySeason.split(',')[0].split(' ')[0]
     AwaySeason_Win = AwaySeason.split(',')[0].split(' ')[1]
@@ -181,7 +184,7 @@ def team_recent_result(soup):
     Output: (away, home) 득점, 실점, 승패 (승리: 1, 패배: 0 )
     '''
 
-    raw_table = preview_soup.select_one('body > div.wrapper > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div > div.box-body.no-padding > table')
+    raw_table = soup.select_one('body > div.wrapper > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div > div.box-body.no-padding > table')
 
     GetScores = []
     LoseScores = []
@@ -202,7 +205,7 @@ def team_recent_result(soup):
     AwayRecentData = pd.DataFrame({'득점': GetScores, '실점': LoseScores, '승패': Result} )
 
 
-    raw_table = preview_soup.select_one('body > div.wrapper > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(2) > div:nth-child(2) > div > div.box-body.no-padding > table')
+    raw_table = soup.select_one('body > div.wrapper > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(2) > div:nth-child(2) > div > div.box-body.no-padding > table')
 
     GetScores = []
     LoseScores = []
@@ -225,25 +228,19 @@ def team_recent_result(soup):
 
     return AwayRecentData,HomeRecentData
 
-# %%
-# game_score
-# away_batting_order
-# home_batting_order
 
-# start_pitcher
-# team_recent_result
-#%%
-def GetAllGameData(preview_soup,log_soup):
+def GetAllGameData(preview_soup,log_soup,GameInfo):
 
-    AwayVersus,HomeVersus = get_versus_data(preview_soup)
-    AwayRecent,HomeRecent = team_recent_result(preview_soup)
-    Awaypitcher,Homepitcher = start_pitcher(preview_soup)
     AwayBattingOrder = away_batting_order(log_soup)
     HomeBattingOrder = home_batting_order(log_soup)
     AwayScore, HomeScore = game_score(log_soup)
-    # with pd.ExcelWirter('')
-
-    with pd.ExcelWriter('/home/swha/ToTo/ToTo/Data/raw/game/' + f'{preview_soup[:10]}_{AwayScore}_{HomeScore}.xlsx') as tmp:
+    AwayVersus,HomeVersus = get_versus_data(preview_soup)
+    AwayRecent,HomeRecent = team_recent_result(preview_soup)
+    Awaypitcher,Homepitcher = start_pitcher(preview_soup)
+    
+    
+    
+    with pd.ExcelWriter(f'/home/swha/ToTo/ToTo/Data/raw/game/{GameInfo}_{AwayScore}_{HomeScore}.xlsx') as tmp:
     
         AwayVersus.to_excel(tmp,sheet_name='AwayVersus')
         AwayRecent.to_excel(tmp,sheet_name='AwayRecent')
@@ -255,15 +252,27 @@ def GetAllGameData(preview_soup,log_soup):
         Homepitcher.to_excel(tmp,sheet_name='Homepitcher')
         HomeBattingOrder.to_excel(tmp,sheet_name='HomeBattingOrder')
 
-# %%
-import os 
-for soup_log in sorted(os.listdir('./Data/soup/soup_data/')):
-    if soup_log.endswith('log'):
-        soup_preview = soup_log[:-4] + '_preview'
-        GetAllGameData(soup_preview,soup_log)    
-    break
+#%%
+
+if __name__ == "__main__":
+
+    import os 
+    data_path = '/home/swha/ToTo/ToTo/Data/soup/soup_data/'
+    for soupLog in sorted(os.listdir(data_path)):
+        if soupLog.endswith('log'):
+            GameInfo = soupLog[:-4]
+            print(soupLog)
+            soupPreview = data_path + GameInfo + '_preview'
+            soupLog = data_path + soupLog
+
+            logParser = BeautifulSoup(open(soupLog),"html.parser")
+            previewParser = BeautifulSoup(open(soupPreview),"html.parser")
+
+            GetAllGameData(previewParser,logParser,GameInfo)    
+        
+        
 
 
 
+    # %%
 
-# %%

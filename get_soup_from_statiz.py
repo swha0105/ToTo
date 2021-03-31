@@ -52,8 +52,32 @@ for date in date_list:
         print(date, stadium)
 
 
+#%%
+# 데이터 없는 soup 삭제
+from get_teamdata_from_html  import away_batting_order
+from bs4 import BeautifulSoup
+import os 
+data_path = '/home/swha/ToTo/ToTo/Data/soup/soup_data/'
+
+# deleteCandidate = []
+
+for dataName in sorted(os.listdir(data_path)):
+    if dataName.endswith('log'):
+        soup = BeautifulSoup(open(data_path + dataName),"html.parser")
+        try:
+            away_batting_order(soup)
+        except AttributeError:
+            os.remove(f'{data_path}{dataName}')
+            os.remove(f'{data_path}{dataName[:-4]}_preview')
+            # deleteCandidate.append(dataName)
+            # deleteCandidate.append(f'{dataName[:-4]}_preview')
+            print(f'{data_path}{dataName}')
+        
+            
+
 
 #------
+
 
 #%%     
 # 각 팀의 선수들의 이름을 긁어옴
@@ -120,3 +144,4 @@ for player in player_list:
         
     
 
+# %%
