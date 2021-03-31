@@ -123,7 +123,10 @@ def start_pitcher(soup):
     Output: (away, home) 선발투수, 시즌 승리, 시즌 패배, 시즌 자책점, 상대 승리, 상대 패배, 상대 자책점, 최근 30일 승리, 최근 30일 패배, 최근 30일 자책점
     '''
     raw_table = soup.select_one('body > div.wrapper > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div > div.box-body.no-padding')
-    raw_table_text = [text for text in raw_table.get_text().split('\n') if text != '']
+    try:
+        raw_table_text = [text for text in raw_table.get_text().split('\n') if text != '']
+    except AttributeError:
+        return False,False
 
     AwayPicther = raw_table_text[raw_table_text.index('선발')+1]
     HomePicther = raw_table_text[raw_table_text.index('선발')+2]
@@ -232,14 +235,20 @@ def team_recent_result(soup):
 def GetAllGameData(preview_soup,log_soup,GameInfo):
 
     AwayBattingOrder = away_batting_order(log_soup)
+    
     HomeBattingOrder = home_batting_order(log_soup)
     AwayScore, HomeScore = game_score(log_soup)
     AwayVersus,HomeVersus = get_versus_data(preview_soup)
     AwayRecent,HomeRecent = team_recent_result(preview_soup)
     Awaypitcher,Homepitcher = start_pitcher(preview_soup)
+
     
+    if AwayBattingOrder.empty or HomeBattingOrder.empty \
+        or type(Awaypitcher) == bool or type(Homepitcher) == bool:
+        return False
     
-    
+    return True
+
     with pd.ExcelWriter(f'/home/swha/ToTo/ToTo/Data/raw/game/{GameInfo}_{AwayScore}_{HomeScore}.xlsx') as tmp:
     
         AwayVersus.to_excel(tmp,sheet_name='AwayVersus')
@@ -257,22 +266,58 @@ def GetAllGameData(preview_soup,log_soup,GameInfo):
 if __name__ == "__main__":
 
     import os 
+    import numpy as np
+    from bs4 import BeautifulSoup
+
     data_path = '/home/swha/ToTo/ToTo/Data/soup/soup_data/'
+    exist_data_path = '/home/swha/ToTo/ToTo/Data/raw/game/'
+    batters = []
+    pitchers = []
+
+    # newDataList = np.setdiff1d(os.listdir(data_path),os.listdir(exist_data_path))
+
     for soupLog in sorted(os.listdir(data_path)):
         if soupLog.endswith('log'):
             GameInfo = soupLog[:-4]
-            print(soupLog)
+            # GameInfo = '2017-09-14_부산사직'
+            print(soupLog,len(batters),len(pitchers))
             soupPreview = data_path + GameInfo + '_preview'
             soupLog = data_path + soupLog
 
             logParser = BeautifulSoup(open(soupLog),"html.parser")
             previewParser = BeautifulSoup(open(soupPreview),"html.parser")
 
-            GetAllGameData(previewParser,logParser,GameInfo)    
-        
-        
+            # if not GetAllGameData(previewParser,logParser,GameInfo):
+            #     continue
+            if not GetAllGameData(previewParser,logParser,GameInfo):
+                continue
+            else:
+                pass
+
+            for i in range(10):
+                
+                if i == 9:
+                    pitcher = tuple(away_batting_order(logParser).to_numpy().tolist()[i])
+                    if pitcher not in pitchers:
+                        pitchers.append(pitcher)
+                    pitcher = tuple(home_batting_order(logParser).to_numpy().tolist()[i])
+                    if pitcher not in pitchers:
+                        pitchers.append(pitcher)
+                else:
+                    batter = tuple(away_batting_order(logParser).to_numpy().tolist()[i])
+                    if batter not in batters:
+                        batters.append(batter)
+                    batter = tuple(home_batting_order(logParser).to_numpy().tolist()[i])
+                    if batter not in batters:
+                        batters.append(batter)
+                
+        # break
+            
+#%%
+with pd.ExcelWriter(f'/home/swha/ToTo/ToTo/Data/raw/all_players.xlsx') as tmp:
+    pd.DataFrame(batters).to_excel(tmp,sheet_name='Batters')
+    pd.DataFrame(pitchers).to_excel(tmp,sheet_name='Pitchers')
 
 
 
-    # %%
-
+# %%
