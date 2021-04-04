@@ -25,6 +25,32 @@ def home_batting_order(soup):
     '''
     Names = []
     Births = []
+    raw_table = soup.select_one('body > div > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div > div.box-body.no-padding.table-responsive > table')
+
+
+    for raw_data in raw_table.find_all('a'):
+        birth_index = str(raw_data).index('birth')
+        birth = str(raw_data)[birth_index+6:birth_index+16]
+        name = raw_data.get_text()
+
+        Names.append(name)
+        Births.append(birth)
+    
+    orders = [''.join(str(num)) for num in range(1,10)]
+    orders += 'P'
+    if Names:
+        HomeBattingOrder = pd.DataFrame({'선수 이름': Names, '생년월일': Births},orders)
+        return HomeBattingOrder
+    else:
+        return False
+
+def away_batting_order(soup):
+    ''' 경기 log 데이터를 받아 어웨이 배팅오더 데이터 생성.
+    return: 선수이름, 생년월일
+
+    '''
+    Names = []
+    Births = []
 
     raw_table = soup.select_one('body > div > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div > div.box-body.no-padding.table-responsive > table')
 
@@ -36,32 +62,14 @@ def home_batting_order(soup):
         Names.append(name)
         Births.append(birth)
 
-    HomeBattingOrder = pd.DataFrame({'선수 이름': Names, '생년월일': Births})
-
-    return HomeBattingOrder
-
-def away_batting_order(soup):
-    ''' 경기 log 데이터를 받아 어웨이 배팅오더 데이터 생성.
-    return: 선수이름, 생년월일
-
-    '''
-    Names = []
-    Births = []
-
-    raw_table = soup.select_one('body > div > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div > div.box-body.no-padding.table-responsive > table')
-
-    for raw_data in raw_table.find_all('a'):
-        birth_index = str(raw_data).index('birth')
-        birth = str(raw_data)[birth_index+6:birth_index+16]
-        name = raw_data.get_text()
-
-        Names.append(name)
-        Births.append(birth)
-
+    orders = [''.join(str(num)) for num in range(1,10)]
+    orders += 'P'
     
-    AwayBattingOrder = pd.DataFrame({'선수 이름': Names, '생년월일': Births})
-
-    return AwayBattingOrder
+    if Names:
+        AwayBattingOrder = pd.DataFrame({'선수 이름': Names, '생년월일': Births},orders)
+        return AwayBattingOrder
+    else:
+        return False
 
 
 
@@ -106,13 +114,19 @@ def get_versus_data(soup):
     VersusDataOnlyHomeWin = raw_table_text[raw_table_text.index('상대전적')+2].split(' ')[0]
 
 
-    Feature = ['팀이름', '시즌 승리', '시즌 패배', '홈/원정 승리', '홈/원정 패배', '경기당 득점', '경기당 실점', '상대전적 승리']
-    AwayInfo = pd.DataFrame([AwayTeamName,AwaySeason_Win,AwaySeason_Lose,AwayResultInStadium_Win,AwayResultInStadium_Lose,\
-            AwayGetScore,AwayLoseScore,VersusDataOnlyAwayWin],Feature)
 
-    Feature = ['팀이름', '시즌 승리', '시즌 패배', '홈/원정 승리', '홈/원정 패배', '경기당 득점', '경기당 실점', '상대전적 승리']
-    HomeInfo = pd.DataFrame([HomeTeamName,HomeSeason_Win,HomeSeason_Lose,HomeResultInStadium_Win,HomeResultInStadium_Lose,\
-            HomeGetScore,HomeLoseScore,VersusDataOnlyHomeWin],Feature)
+    Feature = ['시즌 승리', '시즌 패배', '홈/원정 승리', '홈/원정 패배', '경기당 득점', '경기당 실점', '상대전적 승리']
+    AwayInfo = pd.DataFrame({AwayTeamName:[AwaySeason_Win,AwaySeason_Lose,AwayResultInStadium_Win,AwayResultInStadium_Lose,\
+            AwayGetScore,AwayLoseScore,VersusDataOnlyAwayWin]},Feature)
+
+
+    # Feature = ['팀이름', '시즌 승리', '시즌 패배', '홈/원정 승리', '홈/원정 패배', '경기당 득점', '경기당 실점', '상대전적 승리']
+    # AwayInfo = pd.DataFrame([AwayTeamName,AwaySeason_Win,AwaySeason_Lose,AwayResultInStadium_Win,AwayResultInStadium_Lose,\
+    #         AwayGetScore,AwayLoseScore,VersusDataOnlyAwayWin],Feature,index=False)
+
+    Feature = [ '시즌 승리', '시즌 패배', '홈/원정 승리', '홈/원정 패배', '경기당 득점', '경기당 실점', '상대전적 승리']
+    HomeInfo = pd.DataFrame({HomeTeamName:[HomeSeason_Win,HomeSeason_Lose,HomeResultInStadium_Win,HomeResultInStadium_Lose,\
+            HomeGetScore,HomeLoseScore,VersusDataOnlyHomeWin]},Feature)
 
     return AwayInfo, HomeInfo
 
@@ -168,15 +182,15 @@ def start_pitcher(soup):
     HomeRecent_Lose = HomeRecent.split(',')[0].split(' ')[2]
     HomeRecent_ERA = HomeRecent.split(',')[0].split(' ')[3]
 
-    Feature = ['선발 투수', '작년 경기', '작년 승리', '작년 패배', '작년 자책점', '상대 경기',\
+    Feature = ['작년 경기', '작년 승리', '작년 패배', '작년 자책점', '상대 경기',\
         '상대 승리', '상대 패배','상대 자책점', '최근(30G) 경기','최근(30G) 승리','최근(30G) 패배','최근(30G) 자책점']
-    AwayPitcher = pd.DataFrame([AwayPicther,AwaySeason_Game,AwaySeason_Win,AwaySeason_Lose,AwaySeason_ERA,\
+    AwayPitcher = pd.DataFrame({AwayPicther:[AwaySeason_Game,AwaySeason_Win,AwaySeason_Lose,AwaySeason_ERA,\
         AwayVersus_Game,AwayVersus_Win,AwayVersus_Lose,AwayVersus_ERA,\
-        AwayRecent_Game,AwayRecent_Win,AwayRecent_Lose,AwayRecent_ERA],Feature)
+        AwayRecent_Game,AwayRecent_Win,AwayRecent_Lose,AwayRecent_ERA]},Feature)
 
-    HomePitcher = pd.DataFrame([HomePicther,HomeSeason_Game,HomeSeason_Win,HomeSeason_Lose,HomeSeason_ERA,\
+    HomePitcher = pd.DataFrame({HomePicther:[HomeSeason_Game,HomeSeason_Win,HomeSeason_Lose,HomeSeason_ERA,\
         HomeVersus_Game,HomeVersus_Win,HomeVersus_Lose,HomeVersus_ERA,\
-        HomeRecent_Game,HomeRecent_Win,HomeRecent_Lose,HomeRecent_ERA],Feature)
+        HomeRecent_Game,HomeRecent_Win,HomeRecent_Lose,HomeRecent_ERA]},Feature)
 
     return AwayPitcher, HomePitcher
 
@@ -192,20 +206,28 @@ def team_recent_result(soup):
     GetScores = []
     LoseScores = []
     Result = []
+    Dates = []
     for raw in raw_table.find_all('tr')[1:]:
+
+        DateIdx = str(raw.find_all('a')[1]).find('date')
+        Date = str(raw.find_all('a')[1])[DateIdx+5:DateIdx+15]
+
+        Dates.append(Date)
+
         GetScore = raw.find_all('a')[1].get_text().split(':')[0]
         LoseScore = raw.find_all('a')[1].get_text().split(':')[-1]
 
-        GetScores.append(raw.find_all('a')[1].get_text().split(':')[0])
-        LoseScores.append(raw.find_all('a')[1].get_text().split(':')[-1])
+        GetScores.append(GetScore)
+        LoseScores.append(LoseScore)
 
-        if GetScore > LoseScore:
+        
+        if int(GetScore) > int(LoseScore):
             Result.append('1')
         else:
             Result.append('0')
 
 
-    AwayRecentData = pd.DataFrame({'득점': GetScores, '실점': LoseScores, '승패': Result} )
+    AwayRecentData = pd.DataFrame({'득점': GetScores, '실점': LoseScores, '승패': Result},Dates)
 
 
     raw_table = soup.select_one('body > div.wrapper > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(2) > div:nth-child(2) > div > div.box-body.no-padding > table')
@@ -213,20 +235,28 @@ def team_recent_result(soup):
     GetScores = []
     LoseScores = []
     Result = []
+    Dates = []
+
     for raw in raw_table.find_all('tr')[1:]:
+
+        DateIdx = str(raw.find_all('a')[1]).find('date')
+        Date = str(raw.find_all('a')[1])[DateIdx+5:DateIdx+15]
+
+        Dates.append(Date)
+
         GetScore = raw.find_all('a')[1].get_text().split(':')[0]
         LoseScore = raw.find_all('a')[1].get_text().split(':')[-1]
 
-        GetScores.append(raw.find_all('a')[1].get_text().split(':')[0])
-        LoseScores.append(raw.find_all('a')[1].get_text().split(':')[-1])
+        GetScores.append(GetScore)
+        LoseScores.append(LoseScore)
 
-        if GetScore > LoseScore:
+        if int(GetScore) > int(LoseScore):
             Result.append('1')
         else:
             Result.append('0')
 
 
-    HomeRecentData = pd.DataFrame({'득점': GetScores, '실점': LoseScores, '승패': Result} )
+    HomeRecentData = pd.DataFrame({'득점': GetScores, '실점': LoseScores, '승패': Result},Dates)
 
 
     return AwayRecentData,HomeRecentData
@@ -243,11 +273,10 @@ def GetAllGameData(preview_soup,log_soup,GameInfo):
     Awaypitcher,Homepitcher = start_pitcher(preview_soup)
 
     
-    if AwayBattingOrder.empty or HomeBattingOrder.empty \
+    if type(AwayBattingOrder) == bool or type(HomeBattingOrder) == bool \
         or type(Awaypitcher) == bool or type(Homepitcher) == bool:
         return False
     
-    return True
 
     with pd.ExcelWriter(f'/home/swha/ToTo/ToTo/Data/raw/game/{GameInfo}_{AwayScore}_{HomeScore}.xlsx') as tmp:
     
@@ -269,7 +298,7 @@ if __name__ == "__main__":
     import numpy as np
     from bs4 import BeautifulSoup
 
-    data_path = '/home/swha/ToTo/ToTo/Data/soup/soup_data/'
+    data_path = '/home/swha/ToTo/ToTo/Data/soup/team_soup_data/'
     exist_data_path = '/home/swha/ToTo/ToTo/Data/raw/game/'
     batters = []
     pitchers = []
@@ -280,7 +309,7 @@ if __name__ == "__main__":
         if soupLog.endswith('log'):
             GameInfo = soupLog[:-4]
             # GameInfo = '2017-09-14_부산사직'
-            print(soupLog,len(batters),len(pitchers))
+            print(soupLog)
             soupPreview = data_path + GameInfo + '_preview'
             soupLog = data_path + soupLog
 
@@ -293,7 +322,8 @@ if __name__ == "__main__":
                 continue
             else:
                 pass
-
+            
+        
             for i in range(10):
                 
                 if i == 9:
@@ -320,4 +350,57 @@ with pd.ExcelWriter(f'/home/swha/ToTo/ToTo/Data/raw/all_players.xlsx') as tmp:
 
 
 
-# %%
+#%%
+
+previewParser = BeautifulSoup(open('/home/swha/ToTo/ToTo/Data/soup/team_soup_data/2016-08-16_챔피언스필드_preview'),"html.parser")
+
+soup = previewParser
+raw_table = soup.select_one('body > div.wrapper > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(2) > div:nth-child(1) > div > div.box-body.no-padding > table')
+
+GetScores = []
+LoseScores = []
+Result = []
+Dates = []
+for raw in raw_table.find_all('tr')[1:]:
+
+    DateIdx = str(raw.find_all('a')[1]).find('date')
+    Date = str(raw.find_all('a')[1])[DateIdx+5:DateIdx+15]
+
+    Dates.append(Date)
+
+    GetScore = raw.find_all('a')[1].get_text().split(':')[0]
+    LoseScore = raw.find_all('a')[1].get_text().split(':')[-1]
+
+    GetScores.append(GetScore)
+    LoseScores.append(LoseScore)
+
+    
+    if int(GetScore) > int(LoseScore):
+        Result.append('1')
+    else:
+        Result.append('0')
+
+
+AwayRecentData = pd.DataFrame({'득점': GetScores, '실점': LoseScores, '승패': Result},Dates)
+
+#%%
+
+raw_table = soup.select_one('body > div.wrapper > div.content-wrapper > div > section.content > div > div:nth-child(2) > div:nth-child(2) > div:nth-child(2) > div > div.box-body.no-padding > table')
+
+GetScores = []
+LoseScores = []
+Result = []
+for raw in raw_table.find_all('tr')[1:]:
+    GetScore = raw.find_all('a')[1].get_text().split(':')[0]
+    LoseScore = raw.find_all('a')[1].get_text().split(':')[-1]
+
+    GetScores.append(raw.find_all('a')[1].get_text().split(':')[0])
+    LoseScores.append(raw.find_all('a')[1].get_text().split(':')[-1])
+
+    if GetScore > LoseScore:
+        Result.append('1')
+    else:
+        Result.append('0')
+
+
+HomeRecentData = pd.DataFrame({'득점': GetScores, '실점': LoseScores, '승패': Result})
