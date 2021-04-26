@@ -6,7 +6,7 @@
 # archive/Sample_Result_batter_swha/02-01_implement-random-forest.py
 Data/raw/batter/*.xlsx
 Data/raw/game/*.xlsx
-Data/raw/picther/*.xlsx
+Data/raw/pitcher/*.xlsx
 Data/soup
 Data/soup_backup
 archive
