@@ -11,7 +11,7 @@ import sys
 ## 타자 
 def batter_get_from_soup(soup):
 
-    featureName = ['날짜','상대','결과','타순','P','선발','타수','득점','안타','2타','3타','홈런','루타','타점'\
+    featureName = ['날짜','상대','결과','타순','P','선발','타수','득점','안타','이타','삼타','홈런','루타','타점'\
         ,'도루','도실','볼넷','사구','고4','삼진','병살','희타','희비','타율','출루','장타','OPS'\
             ,'투구','avLI','RE24','WPA']
     feature = []
@@ -53,7 +53,7 @@ for name,birth in NameBirth:
             soup = BeautifulSoup(open(data_path + fileName),"html.parser")
             Info = (batter_get_from_soup(soup))
         except FileNotFoundError:
-            pass
+            continue
 
         if len(Info) == 0:
             continue   
@@ -67,6 +67,7 @@ for name,birth in NameBirth:
                     Info.to_excel(tmp,sheet_name=year,index=False)
 
 
+#%%
 
 ## 투수 
 
@@ -133,3 +134,5 @@ for name,birth in NameBirth:
 
 
     
+
+# %%
