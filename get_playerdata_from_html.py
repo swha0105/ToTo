@@ -74,7 +74,7 @@ for name,birth in NameBirth:
 def pitcher_get_from_soup(soup):
 
     featureName = ['날짜','상대','결과','선발','이닝','실점','자책','타자','타수','안타'\
-        ,'2타','3타','홈런','볼넷','고4','사구','삼진','투구','WHIP','타율','출루율'\
+        ,'이타','삼타','홈런','볼넷','고4','사구','삼진','투구','WHIP','타율','출루율'\
         ,'OPS','ERA','avLI','RE24','WPA','GSC','DEC','간격']
     feature = []
 
@@ -100,7 +100,7 @@ def pitcher_get_from_soup(soup):
 
 
 data_path = '/home/swha/ToTo/ToTo/Data/soup/picther_soup_data/'
-save_path = '/home/swha/ToTo/ToTo/Data/raw/picther/'
+save_path = '/home/swha/ToTo/ToTo/Data/raw/pitcher/'
 years = ['2016','2017','2018','2019','2020']
 
 playerList = os.listdir(data_path)
@@ -119,7 +119,7 @@ for name,birth in NameBirth:
             soup = BeautifulSoup(open(data_path + fileName),"html.parser")
             Info = (pitcher_get_from_soup(soup))
         except FileNotFoundError:
-            pass
+            continue
 
         if len(Info) == 0:
             continue   
