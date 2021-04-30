@@ -8,11 +8,11 @@ def execute(query):
 
 
 #아래 정보를 입력
-user = 'postgres' # insert ID Here
-password = 'bbanal*123' # insert password
-host_product = 'database-1.ct0x8ni2zybc.ap-northeast-2.rds.amazonaws.com' # insert hose endpoint
-dbname = 'postgres' # insert dbname
-port='5432' # insert port here
+user = 
+password = 
+host_product = 
+dbname = 
+port=
 
 product_connection_string = "dbname={dbname} user={user} host={host} password={password} port={port}"\
                             .format(dbname=dbname,
