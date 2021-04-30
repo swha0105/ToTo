@@ -102,21 +102,21 @@ def get_pitcher_info(picther_info,ref_date,days=3):
 
     info_lists  = []
 
-    for j in range(len(away_picther)):
+    for j in range(len(picther_info)):
         
         inning = 0; loss_scored = 0; num_batter = 0; single_hitted = 0; multi_hitted = 0; home_runed = 0; 
         base_onballs = 0; strike_out = 0; total_balls = 0; interval = 0
 
-        inning = away_picther[j].이닝[0]
-        loss_scored = away_picther[j].자책[0]
-        num_batter = away_picther[j].타자[0]
-        single_hitted = away_picther[j].안타[0]
-        multi_hitted = away_picther[j].이타[0] + away_picther[j].삼타[0]
-        home_runed = away_picther[j].홈런[0]
-        base_onballs = away_picther[j].볼넷[0] + away_picther[j].고4[0] + away_picther[j].사구[0]
-        strike_out = away_picther[j].삼진[0]
-        total_balls = away_picther[j].투구[0]
-        interval = away_picther[j].간격[0]
+        inning = picther_info[j].이닝[0]
+        loss_scored = picther_info[j].자책[0]
+        num_batter = picther_info[j].타자[0]
+        single_hitted = picther_info[j].안타[0]
+        multi_hitted = picther_info[j].이타[0] + picther_info[j].삼타[0]
+        home_runed = picther_info[j].홈런[0]
+        base_onballs = picther_info[j].볼넷[0] + picther_info[j].고4[0] + picther_info[j].사구[0]
+        strike_out = picther_info[j].삼진[0]
+        total_balls = picther_info[j].투구[0]
+        interval = picther_info[j].간격[0][0]
 
         info_lists.append([inning,loss_scored,num_batter,single_hitted,multi_hitted,\
                         home_runed,base_onballs,strike_out,total_balls,interval])
@@ -160,8 +160,6 @@ for name,birth in home_batting_order:
 away_batter_info = get_batter_info(away_batting_info,ref_date)
 home_batter_info = get_batter_info(home_batting_info,ref_date)
 
-
-
 #%%
 
 # 투수 데이터
@@ -176,7 +174,7 @@ away_picther = find_pitcher(player_name,ref_date,database_path)
 
 
 
-home_pitcher = pd.read_excel(test_game,sheet_name='AwayBattingOrder',\
+home_pitcher = pd.read_excel(test_game,sheet_name='HomeBattingOrder',\
     index_col=0, engine='openpyxl').to_numpy()[-1]
 
 player_name = f'{home_pitcher[0]}_{home_pitcher[1]}.xlsx'
@@ -184,5 +182,10 @@ home_picther = find_pitcher(player_name,ref_date,database_path)
 
 away_pitcher_info = get_pitcher_info(away_picther,ref_date)
 home_pitcher_info = get_pitcher_info(home_picther,ref_date)
+
+#%%
+
+away_batter = list(map(sum ,zip(*away_batter_info.values)))
+home_batter = list(map(sum ,zip(*home_batter_info.values)))
 
 #%%
