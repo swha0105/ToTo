@@ -73,12 +73,12 @@ def get_batter_info(batting_info,ref_date,days=3):
             at_bat += batting_info[j][i].타수[0]
             run_scored += batting_info[j][i].득점[0]
             single_hits += batting_info[j][i].안타[0]
-            multi_hits += batting_info[j][i].이타[0] + batting_info[0][i].삼타[0]
+            multi_hits += batting_info[j][i].이타[0] + batting_info[j][i].삼타[0]
             home_run += batting_info[j][i].홈런[0]
             run_bat += batting_info[j][i].타점[0]
             stolen_base += batting_info[j][i].도루[0]
-            base_onballs += batting_info[j][i].볼넷[0] + batting_info[0][i].사구[0] + batting_info[0][i].고4[0]
-            sacrifice += batting_info[j][i].희타[0] + batting_info[0][i].희비[0]
+            base_onballs += batting_info[j][i].볼넷[0] + batting_info[j][i].사구[0] + batting_info[j][i].고4[0]
+            sacrifice += batting_info[j][i].희타[0] + batting_info[j][i].희비[0]
             strike_out += batting_info[j][i].삼진[0]
             double_play += batting_info[j][i].병살[0]
 
@@ -130,62 +130,161 @@ def get_pitcher_info(picther_info,ref_date,days=3):
 
 #%%
 
-game_name = '2016-07-26_라이온즈파크_05_04.xlsx'
-test_game = '/home/swha/ToTo/ToTo/Data/raw/' + game_name
-database_path = '/home/swha/ToTo/ToTo/Data/raw/batter/'
-ref_date = '2016-07-26'
+batter_database_path = '/home/ha/ToTo/Data/raw/batter/'
+pitcher_database_path = '/home/ha/ToTo/Data/raw/pitcher/'
+game_database_path = '/home/ha/ToTo/Data/raw/game/'
 days = 3
+whole_data = []
+
+for game_name in sorted(os.listdir(game_database_path))[50:]:
+
+    game_path = game_database_path + game_name
+    ref_date = game_name.split('_')[0]
+    away_get_score = int(game_name.split('_')[2])
+    home_get_score = int(game_name.split('_')[3].split('.')[0])
+
+    # 타자 데이터
+    away_batting_order = pd.read_excel(game_path,sheet_name='AwayBattingOrder',\
+        index_col=0, engine='openpyxl').to_numpy()[:-1]
+    
+    
+    away_batting_info = []
+    home_batting_info = []
+
+    for name,birth in away_batting_order:
+        player_info = f'{name}_{birth}.xlsx'
+        away_batting_info.append(find_batter(player_info,ref_date,batter_database_path))
+
+
+    home_batting_order = pd.read_excel(game_path,sheet_name='HomeBattingOrder',\
+        index_col=0, engine='openpyxl').to_numpy()[:-1]
+
+    for name,birth in home_batting_order:
+        player_info = f'{name}_{birth}.xlsx'
+        home_batting_info.append(find_batter(player_info,ref_date,batter_database_path))
+
+
+    away_batter_info = get_batter_info(away_batting_info,ref_date)
+    home_batter_info = get_batter_info(home_batting_info,ref_date)
+
+    # 투수 데이터
+
+    away_pitcher = pd.read_excel(game_path,sheet_name='AwayBattingOrder',\
+        index_col=0, engine='openpyxl').to_numpy()[-1]
+
+    player_name = f'{away_pitcher[0]}_{away_pitcher[1]}.xlsx'
+    away_picther = find_pitcher(player_name,ref_date,pitcher_database_path)
+
+
+    home_pitcher = pd.read_excel(game_path,sheet_name='HomeBattingOrder',\
+        index_col=0, engine='openpyxl').to_numpy()[-1]
+
+    player_name = f'{home_pitcher[0]}_{home_pitcher[1]}.xlsx'
+    home_picther = find_pitcher(player_name,ref_date,pitcher_database_path)
+
+    away_pitcher_info = get_pitcher_info(away_picther,ref_date)
+    home_pitcher_info = get_pitcher_info(home_picther,ref_date)
+
+
+    # away_batter = list(map(sum ,zip(*away_batter_info.values)))
+    # home_batter = list(map(sum ,zip(*home_batter_info.values)))
+
+
+    away_batter_data = []
+    home_batter_data = []
+
+    for away_bat_order,home_bat_order in zip(away_batter_info.to_numpy(),home_batter_info.to_numpy()):
+        for away_data,home_data in zip(away_bat_order,home_bat_order):
+            away_batter_data.append(away_data)
+            home_batter_data.append(home_data)
+
+
+
+    away_pitcher_data = []
+    home_pitcher_data = []
+
+    for away_pit_order,home_pit_order in zip(away_pitcher_info.to_numpy(),home_pitcher_info.to_numpy()):
+        for away_data,home_data in zip(away_pit_order,home_pit_order):
+            away_pitcher_data.append(int(away_data))
+            home_pitcher_data.append(int(home_data))
+
+
+    away_team_data = []
+
+    away_team_versus = pd.read_excel(game_path,sheet_name='AwayVersus',\
+        index_col=0, engine='openpyxl').to_numpy()
+
+    away_team_recent = pd.read_excel(game_path,sheet_name='AwayRecent',\
+        index_col=0, engine='openpyxl').to_numpy()
+
+    for away_team_versus_data in away_team_versus:
+        try:
+            away_team_data.append(float(away_team_versus_data[0]))
+        except ValueError:
+            away_team_data.append(int(away_team_versus_data[0][:-1]))
+            
+    for away_team_recent_data_bulk in away_team_recent:
+        for away_team_recent_data in away_team_recent_data_bulk:
+            away_team_data.append(away_team_recent_data)
+
+
+    home_team_data = []
+
+    home_team_versus = pd.read_excel(game_path,sheet_name='HomeVersus',\
+        index_col=0, engine='openpyxl').to_numpy()
+
+    home_team_recent = pd.read_excel(game_path,sheet_name='HomeRecent',\
+        index_col=0, engine='openpyxl').to_numpy()
+
+    for home_team_versus_data in home_team_versus:
+        try:
+            home_team_data.append(float(home_team_versus_data[0]))
+        except ValueError:
+            home_team_data.append(int(home_team_versus_data[0][:-1]))
+            
+    for home_team_recent_data_bulk in home_team_recent:
+        for home_team_recent_data in home_team_recent_data_bulk:
+            home_team_data.append(home_team_recent_data)
+
+
+
+    data = []
+    data = away_batter_data + home_batter_data + away_pitcher_data + home_pitcher_data \
+        + away_team_data + home_team_data + [away_get_score] + [home_get_score]
+    
+    whole_data = whole_data + data
 
 #%%
-# 타자 데이터
-away_batting_order = pd.read_excel(test_game,sheet_name='AwayBattingOrder',\
-    index_col=0, engine='openpyxl').to_numpy()[:-1]
 
-away_batting_info = []
-home_batting_info = []
+batting_info = home_batting_info
 
-for name,birth in away_batting_order:
-    player_info = f'{name}_{birth}.xlsx'
-    away_batting_info.append(find_batter(player_info,ref_date,database_path))
+date_list = list(map(lambda x:x.strftime('%m-%d'), pd.date_range(end=ref_date, periods=days+1)))[:-1]
 
+info_lists  = []
 
-home_batting_order = pd.read_excel(test_game,sheet_name='HomeBattingOrder',\
-    index_col=0, engine='openpyxl').to_numpy()[:-1]
-
-for name,birth in home_batting_order:
-    player_info = f'{name}_{birth}.xlsx'
-    home_batting_info.append(find_batter(player_info,ref_date,database_path))
-
-
-away_batter_info = get_batter_info(away_batting_info,ref_date)
-home_batter_info = get_batter_info(home_batting_info,ref_date)
-
-#%%
-
-# 투수 데이터
-
-database_path = '/home/swha/ToTo/ToTo/Data/raw/pitcher/'
-
-away_pitcher = pd.read_excel(test_game,sheet_name='AwayBattingOrder',\
-    index_col=0, engine='openpyxl').to_numpy()[-1]
-
-player_name = f'{away_pitcher[0]}_{away_pitcher[1]}.xlsx'
-away_picther = find_pitcher(player_name,ref_date,database_path)
-
-
-
-home_pitcher = pd.read_excel(test_game,sheet_name='HomeBattingOrder',\
-    index_col=0, engine='openpyxl').to_numpy()[-1]
-
-player_name = f'{home_pitcher[0]}_{home_pitcher[1]}.xlsx'
-home_picther = find_pitcher(player_name,ref_date,database_path)
-
-away_pitcher_info = get_pitcher_info(away_picther,ref_date)
-home_pitcher_info = get_pitcher_info(home_picther,ref_date)
-
-#%%
-
-away_batter = list(map(sum ,zip(*away_batter_info.values)))
-home_batter = list(map(sum ,zip(*home_batter_info.values)))
-
-#%%
+for j in range(len(batting_info)):
+    bat_orders = []    
+    at_bat = 0; run_scored = 0; single_hits = 0; multi_hits = 0; home_run = 0; run_bat = 0
+    stolen_base = 0; base_onballs = 0; sacrifice = 0; strike_out = 0; double_play = 0
+    for i,day in enumerate(date_list):
+        
+        try:
+            date = batting_info[j][i].index[0]
+        except IndexError:
+            break
+        if date != day:
+            # save_format.append([0 for _ in range(10)],ignore_index=True)
+            info_list.append( [0 for _ in range(10) ])
+        
+        # bat_orders.append(home_batting_info[j][i].타순[0])
+        at_bat += batting_info[j][i].타수[0]
+        run_scored += batting_info[j][i].득점[0]
+        single_hits += batting_info[j][i].안타[0]
+        multi_hits += batting_info[j][i].이타[0] + batting_info[j][i].삼타[0]
+        home_run += batting_info[j][i].홈런[0]
+        run_bat += batting_info[j][i].타점[0]
+        stolen_base += batting_info[j][i].도루[0]
+        base_onballs += batting_info[j][i].볼넷[0] + batting_info[0][i].사구[0] + batting_info[0][i].고4[0]
+        sacrifice += batting_info[j][i].희타[0] + batting_info[0][i].희비[0]
+        strike_out += batting_info[j][i].삼진[0]
+        double_play += batting_info[j][i].병살[0]
