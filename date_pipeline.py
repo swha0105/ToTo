@@ -3,6 +3,7 @@
 # from sklearn.datasets import make_regression
 import pandas as pd
 import numpy as np
+import os
 
 def find_batter(player_name,date,database_path,days=3):
     '''
@@ -10,16 +11,21 @@ def find_batter(player_name,date,database_path,days=3):
     '''    
 
     year = date.split('-')[0]
-
-    raw_batter = pd.read_excel(database_path + player_name,sheet_name=str(year), \
-                                index_col=0, engine='openpyxl')
-    
     date_list = list(map(lambda x:x.strftime('%m-%d'), pd.date_range(end=date, periods=days+1)   ))[:-1]
+
+    try:
+        raw_batter = pd.read_excel(database_path + player_name,sheet_name=str(year), \
+                                    index_col=0, engine='openpyxl')
+        batter_info = [raw_batter[raw_batter.index == date_list[i]] for i in range(days) ]
+
+        return batter_info
+
+    except FileNotFoundError:
+        batter_info = pd.DataFrame(index = date_list, columns=raw_batter.columns)
+        batter_info.fillna(0)
+
+        return batter_info
     
-    batter_info = [raw_batter[raw_batter.index == date_list[i]] for i in range(days) ]
-
-    return batter_info
-
 
 def find_pitcher(player_name,date,database_path,days=3):
     '''
@@ -67,7 +73,7 @@ def get_batter_info(batting_info,ref_date,days=3):
                 break
             if date != day:
                 # save_format.append([0 for _ in range(10)],ignore_index=True)
-                info_list.append( [0 for _ in range(10) ])
+                info_lists.append( [0 for _ in range(10) ])
             
             # bat_orders.append(home_batting_info[j][i].타순[0])
             at_bat += batting_info[j][i].타수[0]
@@ -130,30 +136,32 @@ def get_pitcher_info(picther_info,ref_date,days=3):
 
 #%%
 
-batter_database_path = '/home/ha/ToTo/Data/raw/batter/'
-pitcher_database_path = '/home/ha/ToTo/Data/raw/pitcher/'
-game_database_path = '/home/ha/ToTo/Data/raw/game/'
+batter_database_path = os.getcwd() + '/Data/raw/batter/'
+pitcher_database_path = os.getcwd() + '/Data/raw/pitcher/'
+game_database_path = os.getcwd() + '/Data/raw/game/'
 days = 3
 whole_data = []
 
 for game_name in sorted(os.listdir(game_database_path))[50:]:
+    print(game_name)
 
     game_path = game_database_path + game_name
     ref_date = game_name.split('_')[0]
     away_get_score = int(game_name.split('_')[2])
     home_get_score = int(game_name.split('_')[3].split('.')[0])
 
-    # 타자 데이터
-    away_batting_order = pd.read_excel(game_path,sheet_name='AwayBattingOrder',\
-        index_col=0, engine='openpyxl').to_numpy()[:-1]
-    
-    
+    ### 타자 데이터
+
     away_batting_info = []
     home_batting_info = []
+
+    away_batting_order = pd.read_excel(game_path,sheet_name='AwayBattingOrder',\
+        index_col=0, engine='openpyxl').to_numpy()[:-1]
 
     for name,birth in away_batting_order:
         player_info = f'{name}_{birth}.xlsx'
         away_batting_info.append(find_batter(player_info,ref_date,batter_database_path))
+
 
 
     home_batting_order = pd.read_excel(game_path,sheet_name='HomeBattingOrder',\
@@ -173,14 +181,21 @@ for game_name in sorted(os.listdir(game_database_path))[50:]:
         index_col=0, engine='openpyxl').to_numpy()[-1]
 
     player_name = f'{away_pitcher[0]}_{away_pitcher[1]}.xlsx'
-    away_picther = find_pitcher(player_name,ref_date,pitcher_database_path)
 
+    try:
+        away_picther = find_pitcher(player_name,ref_date,pitcher_database_path)
+    except IndexError:
+        continue
 
     home_pitcher = pd.read_excel(game_path,sheet_name='HomeBattingOrder',\
         index_col=0, engine='openpyxl').to_numpy()[-1]
 
     player_name = f'{home_pitcher[0]}_{home_pitcher[1]}.xlsx'
-    home_picther = find_pitcher(player_name,ref_date,pitcher_database_path)
+
+    try:
+        home_picther = find_pitcher(player_name,ref_date,pitcher_database_path)
+    except IndexError:
+        continue
 
     away_pitcher_info = get_pitcher_info(away_picther,ref_date)
     home_pitcher_info = get_pitcher_info(home_picther,ref_date)
@@ -198,8 +213,6 @@ for game_name in sorted(os.listdir(game_database_path))[50:]:
             away_batter_data.append(away_data)
             home_batter_data.append(home_data)
 
-
-
     away_pitcher_data = []
     home_pitcher_data = []
 
@@ -207,6 +220,7 @@ for game_name in sorted(os.listdir(game_database_path))[50:]:
         for away_data,home_data in zip(away_pit_order,home_pit_order):
             away_pitcher_data.append(int(away_data))
             home_pitcher_data.append(int(home_data))
+
 
 
     away_team_data = []
@@ -253,38 +267,3 @@ for game_name in sorted(os.listdir(game_database_path))[50:]:
         + away_team_data + home_team_data + [away_get_score] + [home_get_score]
     
     whole_data = whole_data + data
-
-#%%
-
-batting_info = home_batting_info
-
-date_list = list(map(lambda x:x.strftime('%m-%d'), pd.date_range(end=ref_date, periods=days+1)))[:-1]
-
-info_lists  = []
-
-for j in range(len(batting_info)):
-    bat_orders = []    
-    at_bat = 0; run_scored = 0; single_hits = 0; multi_hits = 0; home_run = 0; run_bat = 0
-    stolen_base = 0; base_onballs = 0; sacrifice = 0; strike_out = 0; double_play = 0
-    for i,day in enumerate(date_list):
-        
-        try:
-            date = batting_info[j][i].index[0]
-        except IndexError:
-            break
-        if date != day:
-            # save_format.append([0 for _ in range(10)],ignore_index=True)
-            info_list.append( [0 for _ in range(10) ])
-        
-        # bat_orders.append(home_batting_info[j][i].타순[0])
-        at_bat += batting_info[j][i].타수[0]
-        run_scored += batting_info[j][i].득점[0]
-        single_hits += batting_info[j][i].안타[0]
-        multi_hits += batting_info[j][i].이타[0] + batting_info[j][i].삼타[0]
-        home_run += batting_info[j][i].홈런[0]
-        run_bat += batting_info[j][i].타점[0]
-        stolen_base += batting_info[j][i].도루[0]
-        base_onballs += batting_info[j][i].볼넷[0] + batting_info[0][i].사구[0] + batting_info[0][i].고4[0]
-        sacrifice += batting_info[j][i].희타[0] + batting_info[0][i].희비[0]
-        strike_out += batting_info[j][i].삼진[0]
-        double_play += batting_info[j][i].병살[0]
