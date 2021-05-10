@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 import os
+from csv import writer
 
 def find_batter(player_name,date,database_path,days=3):
     '''
@@ -21,6 +22,8 @@ def find_batter(player_name,date,database_path,days=3):
         return batter_info
 
     except FileNotFoundError:
+        raw_batter = pd.read_excel(database_path + '김상수_1990-03-23.xlsx',sheet_name=str(year), \
+                                    index_col=0, engine='openpyxl')
         batter_info = pd.DataFrame(index = date_list, columns=raw_batter.columns)
         batter_info.fillna(0)
 
@@ -69,33 +72,34 @@ def get_batter_info(batting_info,ref_date,days=3):
             
             try:
                 date = batting_info[j][i].index[0]
+                at_bat += batting_info[j][i].타수[0]
+                run_scored += batting_info[j][i].득점[0]
+                single_hits += batting_info[j][i].안타[0]
+                multi_hits += batting_info[j][i].이타[0] + batting_info[j][i].삼타[0]
+                home_run += batting_info[j][i].홈런[0]
+                run_bat += batting_info[j][i].타점[0]
+                stolen_base += batting_info[j][i].도루[0]
+                base_onballs += batting_info[j][i].볼넷[0] + batting_info[j][i].사구[0] + batting_info[j][i].고4[0]
+                sacrifice += batting_info[j][i].희타[0] + batting_info[j][i].희비[0]
+                strike_out += batting_info[j][i].삼진[0]
+                double_play += batting_info[j][i].병살[0]
+
+                info_lists.append([at_bat,run_scored,single_hits,multi_hits,home_run,\
+                        stolen_base,base_onballs,sacrifice,strike_out,double_play])
+
             except IndexError:
-                break
-            if date != day:
-                # save_format.append([0 for _ in range(10)],ignore_index=True)
                 info_lists.append( [0 for _ in range(10) ])
+                continue
             
             # bat_orders.append(home_batting_info[j][i].타순[0])
-            at_bat += batting_info[j][i].타수[0]
-            run_scored += batting_info[j][i].득점[0]
-            single_hits += batting_info[j][i].안타[0]
-            multi_hits += batting_info[j][i].이타[0] + batting_info[j][i].삼타[0]
-            home_run += batting_info[j][i].홈런[0]
-            run_bat += batting_info[j][i].타점[0]
-            stolen_base += batting_info[j][i].도루[0]
-            base_onballs += batting_info[j][i].볼넷[0] + batting_info[j][i].사구[0] + batting_info[j][i].고4[0]
-            sacrifice += batting_info[j][i].희타[0] + batting_info[j][i].희비[0]
-            strike_out += batting_info[j][i].삼진[0]
-            double_play += batting_info[j][i].병살[0]
+
 
         # bat_order = collections.Counter(bat_orders).most_common()[0][0]
 
-        info_lists.append([at_bat,run_scored,single_hits,multi_hits,home_run,\
-                        stolen_base,base_onballs,sacrifice,strike_out,double_play])
         
         
     save_format = pd.DataFrame(info_lists,columns=['타수','득점','안타','장타', '홈런', '도루', '볼넷',\
-                '희생', '삼진', '병살'],index=list(range(1,10)))
+                '희생', '삼진', '병살'],index=list(range(1,10))*days)
 
     return save_format
 
@@ -143,7 +147,10 @@ days = 3
 whole_data = []
 
 for game_name in sorted(os.listdir(game_database_path))[50:]:
+    
+    
     print(game_name)
+    
 
     game_path = game_database_path + game_name
     ref_date = game_name.split('_')[0]
@@ -266,4 +273,82 @@ for game_name in sorted(os.listdir(game_database_path))[50:]:
     data = away_batter_data + home_batter_data + away_pitcher_data + home_pitcher_data \
         + away_team_data + home_team_data + [away_get_score] + [home_get_score]
     
-    whole_data = whole_data + data
+    
+    with open('data.csv', 'a') as f_object:
+        writer_object = writer(f_object)
+        writer_object.writerow(data)
+        f_object.close()
+    
+
+#%%
+scheme = []
+bat_scheme = ['타수','득점','안타','장타', '홈런', '도루', '볼넷','희생', '삼진', '병살']
+for i in range(1,10):
+    
+    for bat in bat_scheme:
+        scheme.append(f'{away_batter_str(i)}' )
+
+
+
+#%%
+
+
+
+
+'''
+경기에 해당되는 타자들 데이터 가져오기
+타자는 경기 유무와 관계 없이 최근 n(3)일만 보기
+타순은 제외.
+선발,포지션 제외.
+2루타 3루타는 장타로 합침
+희생번트, 희생플라이 합침.
+'''
+
+
+batting_info = away_batting_info
+ref_date = '2016-04-14'
+
+date_list = list(map(lambda x:x.strftime('%m-%d'), pd.date_range(end=ref_date, periods=days+1)))[:-1]
+
+info_lists  = []
+
+for j in range(len(batting_info)):
+    bat_orders = []    
+    at_bat = 0; run_scored = 0; single_hits = 0; multi_hits = 0; home_run = 0; run_bat = 0
+    stolen_base = 0; base_onballs = 0; sacrifice = 0; strike_out = 0; double_play = 0
+    for i,day in enumerate(date_list):
+        
+        try:
+            date = batting_info[j][i].index[0]
+            at_bat += batting_info[j][i].타수[0]
+            run_scored += batting_info[j][i].득점[0]
+            single_hits += batting_info[j][i].안타[0]
+            multi_hits += batting_info[j][i].이타[0] + batting_info[j][i].삼타[0]
+            home_run += batting_info[j][i].홈런[0]
+            run_bat += batting_info[j][i].타점[0]
+            stolen_base += batting_info[j][i].도루[0]
+            base_onballs += batting_info[j][i].볼넷[0] + batting_info[j][i].사구[0] + batting_info[j][i].고4[0]
+            sacrifice += batting_info[j][i].희타[0] + batting_info[j][i].희비[0]
+            strike_out += batting_info[j][i].삼진[0]
+            double_play += batting_info[j][i].병살[0]
+            info_lists.append([at_bat,run_scored,single_hits,multi_hits,home_run,\
+                stolen_base,base_onballs,sacrifice,strike_out,double_play])
+        except IndexError:
+            info_lists.append( [0 for _ in range(10) ])
+            continue
+            # save_format.append([0 for _ in range(10)],ignore_index=True)
+        
+        
+        # bat_orders.append(home_batting_info[j][i].타순[0])
+
+        
+    
+save_format = pd.DataFrame(info_lists,columns=['타수','득점','안타','장타', '홈런', '도루', '볼넷',\
+            '희생', '삼진', '병살'],index=list(range(1,10))*3 )
+
+    # bat_order = collections.Counter(bat_orders).most_common()[0][0]
+
+
+    
+
+
