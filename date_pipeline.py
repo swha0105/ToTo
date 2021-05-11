@@ -300,46 +300,63 @@ for game_name in sorted(os.listdir(game_database_path)):
     
 
 #%%
-
-date_list = list(map(lambda x:x.strftime('%m-%d'), pd.date_range(end=ref_date, periods=days+1)))[:-1]
-
-info_lists  = []
-batting_info = away_batting_info
-for j in range(len(batting_info)):
-    bat_orders = []    
-    at_bat = 0; run_scored = 0; single_hits = 0; multi_hits = 0; home_run = 0; run_bat = 0
-    stolen_base = 0; base_onballs = 0; sacrifice = 0; strike_out = 0; double_play = 0
-    for i,day in enumerate(date_list):
-        
-        try:
-            date = batting_info[j][i].index[0]
-            at_bat += batting_info[j][i].타수[0]
-            run_scored += batting_info[j][i].득점[0]
-            single_hits += batting_info[j][i].안타[0]
-            multi_hits += batting_info[j][i].이타[0] + batting_info[j][i].삼타[0]
-            home_run += batting_info[j][i].홈런[0]
-            run_bat += batting_info[j][i].타점[0]
-            stolen_base += batting_info[j][i].도루[0]
-            base_onballs += batting_info[j][i].볼넷[0] + batting_info[j][i].사구[0] + batting_info[j][i].고4[0]
-            sacrifice += batting_info[j][i].희타[0] + batting_info[j][i].희비[0]
-            strike_out += batting_info[j][i].삼진[0]
-            double_play += batting_info[j][i].병살[0]
-
-
-        except:
-            continue            
-        
-    info_lists.append([at_bat,run_scored,single_hits,multi_hits,home_run,\
-            stolen_base,base_onballs,sacrifice,strike_out,double_play])
-
-
-        # bat_orders.append(home_batting_info[j][i].타순[0])
-
-
-    # bat_order = collections.Counter(bat_orders).most_common()[0][0]
-
-    
-    
-save_format = pd.DataFrame(info_lists,columns=['타수','득점','안타','장타', '홈런', '도루', '볼넷',\
-            '희생', '삼진', '병살'],index=list(range(1,10)))
+away_batter_data + home_batter_data + away_pitcher_data + home_pitcher_data \
+        + away_team_data + home_team_data + [away_get_score] + [home_get_score]
 # %%
+
+away_bat_scheme = ['타수','득점','안타','장타', '홈런', '도루', '볼넷','희생', '삼진', '병살']
+home_bat_scheme = ['타수','득점','안타','장타', '홈런', '도루', '볼넷','희생', '삼진', '병살']
+
+away_pit_scheme = ['이닝','자책','타자','안타', '장타', '홈런', '볼넷','삼진', '투구', '간격']
+home_pit_scheme = ['이닝','자책','타자','안타', '장타', '홈런', '볼넷','삼진', '투구', '간격']
+
+
+away_versus = ['시즌 승리','시즌 패배','홈/원정 승리','홈/원정 패배','경기당 득점','경기당 실점','상대전적 승리']
+away_recent = ['득점','실점','승패']
+
+home_versus = ['시즌 승리','시즌 패배','홈/원정 승리','홈/원정 패배','경기당 득점','경기당 실점','상대전적 승리']
+home_recent = ['득점','실점','승패']
+
+#%%
+all_schema = []
+
+for i in range(1,10):
+    for scheme in away_bat_scheme:
+        all_schema.append(f'away_batter_{i}_{scheme}')
+
+for i in range(1,10):
+    for scheme in home_bat_scheme:
+        all_schema.append(f'home_batter_{i}_{scheme}')        
+
+
+for i in range(1,4):
+    for scheme in away_pit_scheme:
+        all_schema.append(f'away_pitcher_{i}_{scheme}')
+
+for i in range(1,4):
+    for scheme in home_pit_scheme:
+        all_schema.append(f'home_pitcher_{i}_{scheme}')
+
+for scheme in away_versus:
+    all_schema.append(f'away_versus_{scheme}')
+
+for i in range(1,11):
+    for scheme in away_recent:
+        all_schema.append(f'away_recent_{i}_{scheme}')
+
+
+for scheme in home_versus:
+    all_schema.append(f'home_versus_{scheme}')
+
+for i in range(1,11):
+    for scheme in home_recent:
+        all_schema.append(f'home_recent_{i}_{scheme}')
+all_schema.append('away_get_score')
+all_schema.append('home_get_score')
+
+
+with open("meta_data.txt", "w") as text_file:
+    scheme = "\n".join(str(x) for x in all_schema)
+    text_file.write(scheme)
+
+
